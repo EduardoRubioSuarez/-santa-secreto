@@ -5,8 +5,11 @@ const path = require('path');
 const crypto = require('crypto');
 
 const DATA = path.join(__dirname, 'data.json');
-const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+// Limpia comillas y espacios; agrega https:// si falta.
+const clean = v => String(v || '').trim().replace(/^["']|["']$/g, '').trim();
+let REDIS_URL = clean(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL);
+if (REDIS_URL && !/^https?:\/\//.test(REDIS_URL)) REDIS_URL = 'https://' + REDIS_URL;
+const REDIS_TOKEN = clean(process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN);
 const KEY = 'santa-secreto';
 
 async function redis(cmd) {
@@ -153,7 +156,7 @@ async function api(req, res) {
     return send(res, 404, { error: 'No existe' });
   } catch (e) {
     console.error(e);
-    return send(res, 500, { error: 'Error del servidor' });
+    return send(res, 500, { error: 'Error del servidor: ' + e.message });
   }
 }
 
