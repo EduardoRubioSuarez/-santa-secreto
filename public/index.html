@@ -1,49 +1,169 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f2a1f">
 <title>Santa Secreto</title>
 <style>
-body{font-family:system-ui,sans-serif;background:#14281d;color:#f6efe2;margin:0;display:grid;place-items:center;min-height:100vh}
-main{width:min(440px,92vw);padding:24px}
-h1{margin:0 0 4px}p.sub{margin:0 0 20px;opacity:.75}
-input,textarea,button{font:inherit;width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:0;margin-bottom:10px}
-textarea{min-height:100px;resize:vertical}
-button{background:#c8372d;color:#fff;font-weight:600;cursor:pointer}
-.card{background:#1f3a2b;border-radius:14px;padding:18px;margin-bottom:14px}
-.big{font-size:1.8rem;font-weight:700;margin:4px 0}
-.err{color:#ffb4a8}.ok{color:#a8e6b8}.muted{opacity:.7;font-size:.9rem}
+:root{
+  --ground:#0f2a1f; --field:#16382a; --line:#2c5a44;
+  --ink:#f7f1e6; --muted:#b7cdbd;
+  --red:#c9342a; --red-hi:#dc4637; --red-dark:#a92820; --gold:#e9b949;
+  --paper:#f6ecd6; --paper-ink:#1d2b23; --paper-muted:#5b6a5f;
+  --display:Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;color:var(--ink);background-color:var(--ground);
+  font:18px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  
+}
+body::before{ /* cinta de regalo en el borde superior */
+  content:"";display:block;height:10px;
+  background:linear-gradient(90deg,var(--red) 0 42%,var(--gold) 42% 46%,var(--red) 46% 100%);
+}
+main{width:min(460px,100%);margin:0 auto;padding:28px 20px 56px}
+::selection{background:var(--gold);color:#1d2b23}
+input,textarea{caret-color:var(--gold)}
+h1{font:700 clamp(2rem,9.5vw,2.5rem)/1.05 var(--display);margin:8px 0 6px;text-wrap:balance}
+h2{font:700 1.3rem/1.2 var(--display);margin:0 0 6px}
+.sub{margin:0 0 26px;color:var(--muted)}
+.muted{color:var(--muted);font-size:.95rem}
+label{display:block;font-weight:600;margin:0 0 6px}
+input,textarea,button{font:inherit;width:100%;border-radius:12px}
+input,textarea{
+  background:var(--field);color:var(--ink);border:1.5px solid var(--line);
+  padding:14px 16px;min-height:56px;margin:0 0 18px;
+}
+input::placeholder,textarea::placeholder{color:#8fae9b}
+textarea{min-height:120px;resize:vertical;line-height:1.45;margin-bottom:12px}
+#pin{letter-spacing:.45em;text-align:center;font-size:1.4rem}
+#pin::placeholder{letter-spacing:normal;font-size:1rem}
+:is(input,textarea,button):focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+input:focus,textarea:focus{border-color:var(--gold)}
+button{
+  border:0;min-height:56px;padding:14px 18px;font-weight:700;cursor:pointer;
+  background:var(--red);color:#fff;transition:background .15s,transform .15s;
+}
+button:hover{background:var(--red-dark)}
+button:active{transform:translateY(1px)}
+.hint{margin:-6px 0 18px;color:var(--muted);font-size:.95rem}
+.hint b{color:var(--ink)}
+.err{color:#ffb9ad;min-height:1.5em;margin-top:12px;font-weight:600}
+.ok{color:#a9e8bd;min-height:1.5em;margin-top:8px;font-weight:600}
+
+/* Etiqueta de regalo */
+.tag{
+  position:relative;background:var(--paper);color:var(--paper-ink);
+  border-radius:18px;padding:44px 24px 26px;margin:0 0 30px;
+  box-shadow:0 14px 28px -10px rgba(0,0,0,.55),0 2px 4px rgba(0,0,0,.3);
+}
+.tag::before{ /* agujero de la etiqueta */
+  content:"";position:absolute;top:14px;left:50%;width:18px;height:18px;margin-left:-9px;
+  border-radius:50%;background:var(--ground);box-shadow:inset 0 2px 3px rgba(0,0,0,.6);
+}
+.tag::after{ /* costura */
+  content:"";position:absolute;inset:7px;border:1.5px dashed rgba(29,43,35,.28);border-radius:12px;pointer-events:none;
+}
+.tag .small{color:var(--paper-muted);font-size:.95rem}
+.tag .name{font:700 2.6rem/1.05 var(--display);margin:4px 0 18px;overflow-wrap:anywhere;text-wrap:balance}
+.tag .wishbox{border-top:1.5px dashed rgba(29,43,35,.28);padding-top:14px}
+.tag .wishtext{font-size:1.1rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.tag.pop{animation:pop .7s cubic-bezier(.16,1,.3,1) both;transform-origin:50% 0}
+@keyframes pop{
+  from{opacity:0;transform:translateY(-22px) rotate(-5deg) scale(.96);clip-path:inset(0 0 100% 0 round 18px)}
+  60%{opacity:1}
+  to{opacity:1;transform:none;clip-path:inset(0 0 0 0 round 18px)}
+}
+.linkbtn{background:none;color:var(--muted);min-height:44px;width:auto;padding:8px 0;margin:-14px 0 24px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{background:none;color:var(--ink)}
+
+/* Regalo por descubrir */
+.gift{
+  display:block;background:none;padding:0;margin:0 0 30px;text-align:center;color:var(--ink);min-height:0;
+}
+.gift:hover{background:none}
+.box{
+  position:relative;display:block;width:150px;height:130px;margin:60px auto 20px;border-radius:10px;background:var(--red);
+  box-shadow:0 16px 24px -10px rgba(0,0,0,.6);
+  background-image:linear-gradient(90deg,transparent calc(50% - 15px),var(--gold) calc(50% - 15px) calc(50% + 15px),transparent calc(50% + 15px));
+  transition:transform .3s cubic-bezier(.16,1,.3,1);
+}
+.box::before{ /* tapa */
+  content:"";position:absolute;left:-8px;right:-8px;top:-22px;height:34px;border-radius:8px;background-color:var(--red-hi);
+  background-image:linear-gradient(90deg,transparent calc(50% - 15px),var(--gold) calc(50% - 15px) calc(50% + 15px),transparent calc(50% + 15px));
+  box-shadow:0 4px 6px rgba(0,0,0,.25);
+}
+.box::after{ /* lazo */
+  content:"";position:absolute;left:50%;top:-52px;width:50px;height:34px;margin-left:-25px;
+  border:9px solid var(--gold);border-radius:50% 50% 50% 50%/70% 70% 40% 40%;
+}
+.gift:hover .box,.gift:focus-visible .box{transform:translateY(-6px) rotate(-2deg)}
+.gift:focus-visible{outline:3px solid var(--gold);outline-offset:6px;border-radius:12px}
+.gift .cta{font:700 1.4rem/1.2 var(--display);display:block}
+.gift .note{display:block;color:var(--muted);font-size:.95rem;margin-top:4px;font-weight:400}
+
+.wish{border-top:1.5px dashed var(--line);padding-top:24px}
+@media (prefers-reduced-motion:reduce){
+  .tag.pop{animation:none}
+  .box,button{transition:none}
+}
 </style></head><body><main>
 <h1>🎅 Santa Secreto</h1>
-<p class="sub">Escribe tu nombre y tu PIN para entrar.</p>
+<p class="sub" id="sub">Escribe tu nombre y tu PIN para entrar.</p>
+
 <div id="login">
-  <input id="name" placeholder="Tu nombre" autocomplete="off">
-  <input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN de 4 números" autocomplete="off">
-  <p class="muted"><b>¿Primera vez?</b> Inventa un PIN de 4 números y escríbelo ahí. Ese será tu PIN: anótalo, lo pedirá cada vez que entres. Sirve para que nadie más vea a quién le regalas.</p>
+  <label for="name">Tu nombre</label>
+  <input id="name" placeholder="Como lo escribió el organizador" autocomplete="off" autocapitalize="words">
+  <label for="pin">Tu PIN</label>
+  <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="4 números" autocomplete="off">
+  <p class="hint"><b>¿Primera vez?</b> Inventa un PIN de 4 números y escríbelo aquí. Anótalo: te lo pediremos cada vez que entres. Así nadie más ve a quién le regalas.</p>
   <button onclick="enter()">Entrar</button>
-  <div id="err" class="err"></div>
+  <div id="err" class="err" role="alert"></div>
 </div>
+
 <div id="app" hidden>
-  <div class="card" id="result"></div>
-  <div class="card">
-    <b>¿Qué te gustaría recibir?</b>
+  <div id="result"></div>
+  <section class="wish">
+    <h2>¿Qué te gustaría recibir?</h2>
     <p class="muted">Tu Santa lo verá cuando se haga el sorteo. Puedes editarlo cuando quieras.</p>
-    <textarea id="wish" maxlength="500" placeholder="Ej: libros de fantasía, tazas, snacks, nada de ropa..."></textarea>
+    <textarea id="wish" maxlength="500" aria-label="Lo que te gustaría recibir" placeholder="Ej: libros de fantasía, tazas, snacks, nada de ropa..."></textarea>
     <button onclick="saveWish()">Guardar</button>
-    <div id="msg" class="ok"></div>
-  </div>
+    <div id="msg" class="ok" role="status"></div>
+  </section>
 </div>
+
 <script>
 const $=id=>document.getElementById(id);
-let me='',myPin='';
+let me='',myPin='',last=null;
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return[r.ok,await r.json()]}
 async function enter(){
   const [ok,d]=await api('/api/me',{name:$('name').value,pin:$('pin').value});
   if(!ok){$('err').textContent=d.error;return}
-  me=d.name;myPin=$('pin').value;$('login').hidden=true;$('app').hidden=false;$('wish').value=d.wish||'';
-  $('result').innerHTML=d.drawn
-    ?`<div class="muted">Hola ${esc(d.name)}, te tocó regalarle a:</div><div class="big">${esc(d.target)}</div>
-      <div class="muted">Lo que quiere:</div><div>${d.targetWish?esc(d.targetWish):'<i>Aún no escribió nada.</i>'}</div>`
-    :`<div class="muted">Hola ${esc(d.name)}.${d.created?' <b class="ok">Tu PIN quedó guardado. No lo olvides.</b>':''}</div><div>El sorteo aún no se hace. Mientras, escribe lo que te gustaría recibir y vuelve más tarde.</div>`;
+  me=d.name;myPin=$('pin').value;last=d;
+  $('login').hidden=true;$('app').hidden=false;$('wish').value=d.wish||'';
+  $('sub').textContent='Hola, '+d.name+'.';
+  render(false);
+}
+function render(reveal){
+  const d=last;
+  if(!d.drawn){
+    $('result').innerHTML=`<div class="tag"><div class="small">${d.created?'<b>Tu PIN quedó guardado. No lo olvides.</b><br>':''}Aún no hay sorteo</div>
+      <div class="name">Pronto sabrás a quién le regalas</div>
+      <div class="wishbox small">Mientras tanto, escribe lo que te gustaría recibir y vuelve más tarde.</div></div>`;
+    return;
+  }
+  if(!reveal){
+    $('result').innerHTML=`<button class="gift" onclick="render(true)"><span class="box" aria-hidden="true"></span>
+      <span class="cta">Toca para descubrir a quién le regalas</span>
+      <span class="note">Asegúrate de que nadie más esté mirando tu pantalla.</span></button>`;
+    return;
+  }
+  $('result').innerHTML=`<div class="tag pop"><div class="small">Te tocó regalarle a</div>
+    <div class="name">${esc(d.target)}</div>
+    <div class="wishbox"><div class="small">Lo que quiere</div>
+    <div class="wishtext">${d.targetWish?esc(d.targetWish):'<i>Aún no escribió nada.</i>'}</div></div></div>
+    <button class="linkbtn" onclick="render(false)">Ocultar de nuevo</button>`;
 }
 async function saveWish(){
   const [ok]=await api('/api/wish',{name:me,pin:myPin,wish:$('wish').value});

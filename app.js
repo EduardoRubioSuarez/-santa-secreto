@@ -97,7 +97,9 @@ async function api(req, res) {
 
     // --- admin ---
     if (url.pathname.startsWith('/api/admin')) {
-      if (req.headers['x-key'] !== adminKey(d)) return send(res, 401, { error: 'Clave incorrecta' });
+      const k = adminKey(d);
+      if (!k) return send(res, 500, { error: 'Falta configurar ADMIN_KEY en Vercel' });
+      if (req.headers['x-key'] !== k) return send(res, 401, { error: 'Clave incorrecta' });
       if (url.pathname === '/api/admin' && req.method === 'GET')
         return send(res, 200, { drawn: d.drawn, participants: d.participants.map(p => ({ name: p.name, hasWish: !!p.wish, hasPin: !!p.pin })) });
       const b = await body(req);

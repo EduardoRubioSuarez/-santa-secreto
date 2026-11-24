@@ -1,51 +1,133 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f2a1f">
 <title>Santa Secreto - Admin</title>
 <style>
-body{font-family:system-ui,sans-serif;max-width:480px;margin:30px auto;padding:0 16px}
-textarea,input,button{font:inherit;width:100%;box-sizing:border-box;padding:10px;margin:6px 0}
-textarea{min-height:140px}button{cursor:pointer}
-li{margin:2px 0}.err{color:#b00}.ok{color:#080}
-</style></head><body>
-<h1>Admin Santa Secreto</h1>
-<input id="key" type="password" placeholder="Clave de admin">
-<button onclick="load()">Entrar</button>
-<div id="err" class="err"></div>
-<div id="panel" hidden>
-  <h2>Participantes (uno por línea)</h2>
-  <textarea id="names"></textarea>
-  <button id="saveBtn" onclick="saveNames()">Guardar lista</button>
-  <button id="drawBtn" onclick="act('draw','¿Hacer el sorteo?')">Sortear</button>
-  <button onclick="act('reset','Esto borra el sorteo (los deseos se conservan). ¿Seguro?')">Reiniciar sorteo</button>
-  <div id="status"></div>
-  <ul id="list"></ul>
-  <h2>Compartir</h2>
-  <small>Abre el admin desde el link público (el de Cloudflare) y esto se llena solo. Si no, pega el link aquí.</small>
-  <input id="link">
-  <button onclick="copy('link')">Copiar link</button>
-  <textarea id="msg"></textarea>
-  <button onclick="copy('msg')">Copiar mensaje para WhatsApp</button>
-  <div id="copied" class="ok"></div>
+:root{
+  --ground:#0f2a1f; --field:#16382a; --line:#2c5a44;
+  --ink:#f7f1e6; --muted:#b7cdbd;
+  --red:#c9342a; --red-dark:#a92820; --gold:#e9b949;
+  --display:Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;color:var(--ink);background-color:var(--ground);
+  font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  
+}
+body::before{content:"";display:block;height:10px;background:linear-gradient(90deg,var(--red) 0 42%,var(--gold) 42% 46%,var(--red) 46% 100%)}
+main{width:min(620px,100%);margin:0 auto;padding:24px 20px 64px}
+::selection{background:var(--gold);color:#1d2b23}
+input,textarea{caret-color:var(--gold)}
+h1{font:700 2rem/1.1 var(--display);margin:6px 0 20px}
+h2{font:700 1.25rem/1.2 var(--display);margin:0 0 4px}
+section{padding:24px 0;border-top:1.5px dashed var(--line)}
+.muted{color:var(--muted);font-size:.95rem;margin:0 0 12px}
+input,textarea,button{font:inherit;border-radius:12px}
+input,textarea{
+  width:100%;background:var(--field);color:var(--ink);border:1.5px solid var(--line);
+  padding:12px 14px;margin:0 0 12px;
+}
+input{min-height:50px}
+textarea{min-height:200px;resize:vertical;line-height:1.5}
+#msg{min-height:150px}
+input:focus,textarea:focus{border-color:var(--gold)}
+:is(input,textarea,button):focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button{
+  border:1.5px solid transparent;min-height:48px;padding:10px 18px;font-weight:700;cursor:pointer;
+  background:var(--red);color:#fff;transition:background .15s,transform .15s;
+}
+button:hover{background:var(--red-dark)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:disabled:hover{background:var(--red)}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button.ghost:hover{background:var(--field);border-color:var(--muted)}
+button.mini{min-height:36px;padding:4px 12px;font-size:.9rem;background:transparent;color:var(--ink);border-color:var(--line)}
+button.mini:hover{background:var(--field)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>button{flex:1 1 180px}
+.err{color:#ffb9ad;font-weight:600;min-height:1.5em;margin-top:8px}
+.ok{color:#a9e8bd;font-weight:600}
+.state{font-size:1.1rem;margin:4px 0 16px}
+.state b{font-family:var(--display);font-size:1.3rem}
+
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
+li:last-child{border-bottom:0}
+li .n{font-weight:700;flex:1 1 140px;overflow-wrap:anywhere}
+.pill{font-size:.85rem;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--field);color:var(--muted);border:1px solid var(--line)}
+.pill.done{background:#1f5a3c;color:#d9f5e3;border-color:#2f7d54}
+.empty{color:var(--muted);padding:6px 0}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
+</style></head><body><main>
+<h1>🎅 Admin Santa Secreto</h1>
+
+<div id="login">
+  <label for="key" class="muted">Clave de admin</label>
+  <input id="key" type="password" placeholder="Pega tu clave" autocomplete="off">
+  <button onclick="load()" style="width:100%">Entrar</button>
+  <div id="err" class="err" role="alert"></div>
 </div>
+
+<div id="panel" hidden>
+  <section style="border-top:0;padding-top:0">
+    <h2>Participantes</h2>
+    <p class="muted">Un nombre por línea. Los amigos deben escribirlo igual para entrar (sin importar mayúsculas ni tildes).</p>
+    <textarea id="names" aria-label="Lista de participantes"></textarea>
+    <button id="saveBtn" onclick="saveNames()">Guardar lista</button>
+  </section>
+
+  <section>
+    <h2>Sorteo</h2>
+    <div id="status" class="state"></div>
+    <div class="row">
+      <button id="drawBtn" onclick="act('draw','¿Hacer el sorteo?')">Sortear</button>
+      <button class="ghost" onclick="act('reset','Esto borra el sorteo (los deseos se conservan). ¿Seguro?')">Reiniciar sorteo</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Estado de cada persona</h2>
+    <ul id="list"></ul>
+  </section>
+
+  <section>
+    <h2>Compartir</h2>
+    <p class="muted">Abre el admin desde el link público y esto se llena solo. Si no, pega aquí el link.</p>
+    <input id="link" aria-label="Link para los amigos">
+    <button class="ghost" onclick="copy('link')" style="width:100%;margin-bottom:12px">Copiar link</button>
+    <textarea id="msg" aria-label="Mensaje para WhatsApp"></textarea>
+    <button onclick="copy('msg')" style="width:100%">Copiar mensaje para WhatsApp</button>
+    <div id="copied" class="ok" role="status" style="min-height:1.5em;margin-top:8px"></div>
+  </section>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const h=()=>({'Content-Type':'application/json','x-key':$('key').value});
 async function call(p,m='GET',b){const r=await fetch(p,{method:m,headers:h(),body:b?JSON.stringify(b):undefined});return[r.ok,await r.json()]}
 async function load(){
   const [ok,d]=await call('/api/admin');
   if(!ok){$('err').textContent=d.error;return}
-  $('err').textContent='';$('panel').hidden=false;
+  $('err').textContent='';$('login').hidden=true;$('panel').hidden=false;
   if(!$('names').value)$('names').value=d.participants.map(p=>p.name).join('\n');
   $('names').disabled=$('saveBtn').disabled=$('drawBtn').disabled=d.drawn;
-  $('status').innerHTML=d.drawn?'<b class="ok">Sorteo hecho ✓</b>':'Sorteo pendiente';
-  $('list').innerHTML=d.participants.map(p=>`<li>${p.name} ${p.hasWish?'✓ ya escribió su deseo':'— sin deseo aún'} · ${p.hasPin?`PIN creado <button style="width:auto;padding:2px 8px;margin:0" data-n="${encodeURIComponent(p.name)}" onclick="resetPin(this)">Borrar PIN</button>`:'sin PIN aún'}</li>`).join('');
+  $('status').innerHTML=d.drawn?'<b class="ok">Sorteo hecho</b>':'<b>Sorteo pendiente</b>';
+  $('list').innerHTML=d.participants.length?d.participants.map(p=>`<li><span class="n">${esc(p.name)}</span>
+    <span class="pill ${p.hasWish?'done':''}">${p.hasWish?'Deseo escrito':'Sin deseo'}</span>
+    <span class="pill ${p.hasPin?'done':''}">${p.hasPin?'PIN creado':'Sin PIN'}</span>
+    ${p.hasPin?`<button class="mini" data-n="${encodeURIComponent(p.name)}" onclick="resetPin(this)">Borrar PIN</button>`:''}</li>`).join('')
+    :'<li class="empty">Aún no hay participantes. Guarda la lista arriba.</li>';
 }
 function buildMsg(){
   $('msg').value='🎅 ¡Santa Secreto!\n1) Entra aquí: '+$('link').value+'\n2) Escribe tu nombre e inventa un PIN de 4 números (anótalo, lo pedirá cada vez).\n3) Cuéntanos qué regalo quieres.\n4) Cuando haga el sorteo, vuelve a entrar con tu nombre y tu PIN y verás a quién te tocó. ¡No se lo digas a nadie! 🤫';
 }
 async function copy(id){
   await navigator.clipboard.writeText($(id).value);
-  $('copied').textContent='Copiado ✓';setTimeout(()=>$('copied').textContent='',1500);
+  $('copied').textContent='Copiado';setTimeout(()=>$('copied').textContent='',1500);
 }
 $('link').value=location.origin+'/';buildMsg();
 $('link').oninput=buildMsg;
@@ -66,4 +148,5 @@ async function act(a,q){
   if(!ok)alert(d.error);
   load();
 }
-</script></body></html>
+$('key').addEventListener('keydown',e=>e.key==='Enter'&&load());
+</script></main></body></html>
