@@ -29,7 +29,10 @@ async function load() {
     d = JSON.parse(fs.readFileSync(DATA, 'utf8'));
   }
   if (!d) {
-    d = { drawn: false, participants: [] };
+    // Lista inicial de nombres (solo nombres, nada secreto) desde names.txt
+    const f = path.join(__dirname, 'names.txt');
+    const names = fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').map(n => n.trim()).filter(Boolean) : [];
+    d = { drawn: false, participants: names.map(n => ({ name: n, wish: '' })) };
     if (!REDIS_URL) d.adminKey = crypto.randomBytes(6).toString('hex');
     await save(d);
   }
