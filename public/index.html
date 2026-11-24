@@ -36,7 +36,7 @@ input,textarea{
 }
 input::placeholder,textarea::placeholder{color:#8fae9b}
 textarea{min-height:120px;resize:vertical;line-height:1.45;margin-bottom:12px}
-#pin{letter-spacing:.45em;text-align:center;font-size:1.4rem}
+#pin{-webkit-text-security:disc;letter-spacing:.45em;text-align:center;font-size:1.4rem}
 #pin::placeholder{letter-spacing:normal;font-size:1rem}
 :is(input,textarea,button):focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 input:focus,textarea:focus{border-color:var(--gold)}
@@ -115,7 +115,7 @@ button:active{transform:translateY(1px)}
   <label for="name">Tu nombre</label>
   <input id="name" placeholder="Como lo escribió el organizador" autocomplete="off" autocapitalize="words">
   <label for="pin">Tu PIN</label>
-  <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="4 números" autocomplete="off">
+  <input id="pin" type="text" inputmode="numeric" autocomplete="off" data-lpignore="true" data-1p-ignore pattern="[0-9]*" maxlength="4" placeholder="4 números" autocomplete="off">
   <p class="hint"><b>¿Primera vez?</b> Inventa un PIN de 4 números y escríbelo aquí. Anótalo: te lo pediremos cada vez que entres. Así nadie más ve a quién le regalas.</p>
   <button onclick="enter()">Entrar</button>
   <div id="err" class="err" role="alert"></div>
