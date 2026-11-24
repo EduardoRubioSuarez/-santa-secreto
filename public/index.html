@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Santa Secreto</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#14281d;color:#f6efe2;margin:0;display:grid;place-items:center;min-height:100vh}
+main{width:min(440px,92vw);padding:24px}
+h1{margin:0 0 4px}p.sub{margin:0 0 20px;opacity:.75}
+input,textarea,button{font:inherit;width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:0;margin-bottom:10px}
+textarea{min-height:100px;resize:vertical}
+button{background:#c8372d;color:#fff;font-weight:600;cursor:pointer}
+.card{background:#1f3a2b;border-radius:14px;padding:18px;margin-bottom:14px}
+.big{font-size:1.8rem;font-weight:700;margin:4px 0}
+.err{color:#ffb4a8}.ok{color:#a8e6b8}.muted{opacity:.7;font-size:.9rem}
+</style></head><body><main>
+<h1>🎅 Santa Secreto</h1>
+<p class="sub">Escribe tu nombre y tu PIN para entrar.</p>
+<div id="login">
+  <input id="name" placeholder="Tu nombre" autocomplete="off">
+  <input id="pin" type="password" inputmode="numeric" maxlength="4" placeholder="PIN de 4 números" autocomplete="off">
+  <p class="muted"><b>¿Primera vez?</b> Inventa un PIN de 4 números y escríbelo ahí. Ese será tu PIN: anótalo, lo pedirá cada vez que entres. Sirve para que nadie más vea a quién le regalas.</p>
+  <button onclick="enter()">Entrar</button>
+  <div id="err" class="err"></div>
+</div>
+<div id="app" hidden>
+  <div class="card" id="result"></div>
+  <div class="card">
+    <b>¿Qué te gustaría recibir?</b>
+    <p class="muted">Tu Santa lo verá cuando se haga el sorteo. Puedes editarlo cuando quieras.</p>
+    <textarea id="wish" maxlength="500" placeholder="Ej: libros de fantasía, tazas, snacks, nada de ropa..."></textarea>
+    <button onclick="saveWish()">Guardar</button>
+    <div id="msg" class="ok"></div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let me='',myPin='';
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return[r.ok,await r.json()]}
+async function enter(){
+  const [ok,d]=await api('/api/me',{name:$('name').value,pin:$('pin').value});
+  if(!ok){$('err').textContent=d.error;return}
+  me=d.name;myPin=$('pin').value;$('login').hidden=true;$('app').hidden=false;$('wish').value=d.wish||'';
+  $('result').innerHTML=d.drawn
+    ?`<div class="muted">Hola ${esc(d.name)}, te tocó regalarle a:</div><div class="big">${esc(d.target)}</div>
+      <div class="muted">Lo que quiere:</div><div>${d.targetWish?esc(d.targetWish):'<i>Aún no escribió nada.</i>'}</div>`
+    :`<div class="muted">Hola ${esc(d.name)}.${d.created?' <b class="ok">Tu PIN quedó guardado. No lo olvides.</b>':''}</div><div>El sorteo aún no se hace. Mientras, escribe lo que te gustaría recibir y vuelve más tarde.</div>`;
+}
+async function saveWish(){
+  const [ok]=await api('/api/wish',{name:me,pin:myPin,wish:$('wish').value});
+  $('msg').textContent=ok?'Guardado ✓':'Error al guardar';
+}
+['name','pin'].forEach(i=>$(i).addEventListener('keydown',e=>e.key==='Enter'&&enter()));
+</script></main></body></html>

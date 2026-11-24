@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Santa Secreto - Admin</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:480px;margin:30px auto;padding:0 16px}
+textarea,input,button{font:inherit;width:100%;box-sizing:border-box;padding:10px;margin:6px 0}
+textarea{min-height:140px}button{cursor:pointer}
+li{margin:2px 0}.err{color:#b00}.ok{color:#080}
+</style></head><body>
+<h1>Admin Santa Secreto</h1>
+<input id="key" type="password" placeholder="Clave de admin">
+<button onclick="load()">Entrar</button>
+<div id="err" class="err"></div>
+<div id="panel" hidden>
+  <h2>Participantes (uno por línea)</h2>
+  <textarea id="names"></textarea>
+  <button id="saveBtn" onclick="saveNames()">Guardar lista</button>
+  <button id="drawBtn" onclick="act('draw','¿Hacer el sorteo?')">Sortear</button>
+  <button onclick="act('reset','Esto borra el sorteo (los deseos se conservan). ¿Seguro?')">Reiniciar sorteo</button>
+  <div id="status"></div>
+  <ul id="list"></ul>
+  <h2>Compartir</h2>
+  <small>Abre el admin desde el link público (el de Cloudflare) y esto se llena solo. Si no, pega el link aquí.</small>
+  <input id="link">
+  <button onclick="copy('link')">Copiar link</button>
+  <textarea id="msg"></textarea>
+  <button onclick="copy('msg')">Copiar mensaje para WhatsApp</button>
+  <div id="copied" class="ok"></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const h=()=>({'Content-Type':'application/json','x-key':$('key').value});
+async function call(p,m='GET',b){const r=await fetch(p,{method:m,headers:h(),body:b?JSON.stringify(b):undefined});return[r.ok,await r.json()]}
+async function load(){
+  const [ok,d]=await call('/api/admin');
+  if(!ok){$('err').textContent=d.error;return}
+  $('err').textContent='';$('panel').hidden=false;
+  if(!$('names').value)$('names').value=d.participants.map(p=>p.name).join('\n');
+  $('names').disabled=$('saveBtn').disabled=$('drawBtn').disabled=d.drawn;
+  $('status').innerHTML=d.drawn?'<b class="ok">Sorteo hecho ✓</b>':'Sorteo pendiente';
+  $('list').innerHTML=d.participants.map(p=>`<li>${p.name} ${p.hasWish?'✓ ya escribió su deseo':'— sin deseo aún'} · ${p.hasPin?`PIN creado <button style="width:auto;padding:2px 8px;margin:0" data-n="${encodeURIComponent(p.name)}" onclick="resetPin(this)">Borrar PIN</button>`:'sin PIN aún'}</li>`).join('');
+}
+function buildMsg(){
+  $('msg').value='🎅 ¡Santa Secreto!\n1) Entra aquí: '+$('link').value+'\n2) Escribe tu nombre e inventa un PIN de 4 números (anótalo, lo pedirá cada vez).\n3) Cuéntanos qué regalo quieres.\n4) Cuando haga el sorteo, vuelve a entrar con tu nombre y tu PIN y verás a quién te tocó. ¡No se lo digas a nadie! 🤫';
+}
+async function copy(id){
+  await navigator.clipboard.writeText($(id).value);
+  $('copied').textContent='Copiado ✓';setTimeout(()=>$('copied').textContent='',1500);
+}
+$('link').value=location.origin+'/';buildMsg();
+$('link').oninput=buildMsg;
+async function resetPin(b){
+  const n=decodeURIComponent(b.dataset.n);
+  if(!confirm('¿Borrar el PIN de '+n+'? Podrá crear uno nuevo al entrar.'))return;
+  const [ok,d]=await call('/api/admin/resetpin','POST',{name:n});
+  if(!ok)alert(d.error);load();
+}
+async function saveNames(){
+  const names=$('names').value.split('\n');
+  const [ok,d]=await call('/api/admin/participants','POST',{names});
+  if(!ok)alert(d.error);load();
+}
+async function act(a,q){
+  if(!confirm(q))return;
+  const [ok,d]=await call('/api/admin/'+a,'POST',{});
+  if(!ok)alert(d.error);
+  load();
+}
+</script></body></html>
