@@ -46,7 +46,7 @@ async function save(d) {
   else fs.writeFileSync(DATA, JSON.stringify(d, null, 2));
 }
 // En Vercel la clave viene de la variable ADMIN_KEY; en local, de data.json.
-const adminKey = d => process.env.ADMIN_KEY || d.adminKey;
+const adminKey = d => clean(process.env.ADMIN_KEY) || d.adminKey;
 
 const norm = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ');
 const find = (d, name) => d.participants.find(p => norm(p.name) === norm(name));
